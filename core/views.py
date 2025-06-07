@@ -1,7 +1,36 @@
 from django.shortcuts import render
+from django.db.models import Q
+from django.core.paginator import Paginator
+from .models import Course, Enrollment
 
 def home(request):
-    return render(request, 'core/home.html')
+    query = request.GET.get('q', '')
+    courses = Course.objects.all()
+
+    if query:
+        courses = courses.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query)
+        )
+
+    # Add `is_enrolled` flag for each course (if user is logged in)
+    if request.user.is_authenticated:
+        enrolled_course_ids = Enrollment.objects.filter(student=request.user).values_list('course_id', flat=True)
+        for course in courses:
+            course.is_enrolled = course.id in enrolled_course_ids
+    else:
+        for course in courses:
+            course.is_enrolled = False
+
+    paginator = Paginator(courses, 6)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'core/home.html', {
+        'page_obj': page_obj,
+        'query': query,
+    })
+
 
 # Authentication Views
 from django.shortcuts import render, redirect
@@ -171,3 +200,12 @@ def delete_lesson(request, lesson_id):
     course_id = lesson.course.id
     lesson.delete()
     return redirect('manage_lessons', course_id=course_id)
+
+# Enrollment Views
+from .models import Enrollment
+
+@login_required
+def enroll_in_course(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    Enrollment.objects.get_or_create(student=request.user, course=course)
+    return redirect('student_dashboard')  # or course_detail

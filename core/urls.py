@@ -20,4 +20,8 @@ urlpatterns = [
     path('instructor/lesson/<int:lesson_id>/edit/', views.update_lesson, name='update_lesson'),
     path('instructor/lesson/<int:lesson_id>/delete/', views.delete_lesson, name='delete_lesson'),
 
+    # Course Enrollement
+    path('course/<int:course_id>/enroll/', views.enroll_in_course, name='enroll_in_course'),
+
+    # Student Dashboard URLs
 ]
