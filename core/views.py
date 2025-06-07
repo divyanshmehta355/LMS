@@ -101,20 +101,60 @@ def manage_lessons(request, course_id):
     lessons = Lesson.objects.filter(course=course)
     return render(request, 'core/instructor/lesson_list.html', {'course': course, 'lessons': lessons})
 
+# File Upload Functionality Added
+import os
+import tempfile
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django import forms
+from .models import Course, Lesson
+from .forms import LessonForm
+from .appwrite_client import storage
+from appwrite.input_file import InputFile
+
 @login_required
 def create_lesson(request, course_id):
     course = get_object_or_404(Course, id=course_id, instructor=request.user)
+
     if request.method == 'POST':
-        form = LessonForm(request.POST)
+        form = LessonForm(request.POST, request.FILES)
         if form.is_valid():
             lesson = form.save(commit=False)
             lesson.course = course
+
+            if request.FILES.get('file'):
+                upload_file = request.FILES['file']
+
+                # Save to a temporary file
+                with tempfile.NamedTemporaryFile(delete=False) as temp:
+                    for chunk in upload_file.chunks():
+                        temp.write(chunk)
+                    temp_path = temp.name
+
+                try:
+                    # Upload to Appwrite using path
+                    appwrite_file = storage.create_file(
+                        bucket_id="684345b50008bfe7742b",
+                        file_id="unique()",
+                        file=InputFile.from_path(temp_path),
+                    )
+                    lesson.file_id = appwrite_file['$id']
+                finally:
+                    os.remove(temp_path)  # Clean up temp file
+
             lesson.save()
             return redirect('manage_lessons', course_id=course.id)
+
     else:
         form = LessonForm(initial={'course': course})
         form.fields['course'].widget = forms.HiddenInput()
-    return render(request, 'core/instructor/lesson_form.html', {'form': form, 'course': course})
+
+    return render(request, 'core/instructor/lesson_form.html', {
+        'form': form,
+        'course': course
+    })
+
+
 
 @login_required
 def update_lesson(request, lesson_id):

@@ -1,9 +1,26 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">{{ course|default:'Create' }} Course</h1>
-<form method="post">
+<h1 class="text-2xl font-bold mb-4">
+    {% if form.instance.pk %}Edit{% else %}Create{% endif %} Lesson for "{{ course.title }}"
+</h1>
+
+<form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+
+    <label class="block mt-4">Upload File (Optional):</label>
+    <input type="file" name="file" class="mt-1">
+
+    {% if form.instance.file_id %}
+        <p class="mt-2 text-sm">
+            Existing file:
+            <a href="https://cloud.appwrite.io/v1/storage/buckets/YOUR_BUCKET_ID/files/{{ form.instance.file_id }}/view?project=YOUR_PROJECT_ID"
+               target="_blank" class="text-blue-600 underline">
+                View File
+            </a>
+        </p>
+    {% endif %}
+
+    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded mt-4">Save</button>
 </form>
 {% endblock %}

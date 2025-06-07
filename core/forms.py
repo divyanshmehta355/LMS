@@ -33,6 +33,8 @@ class CourseForm(forms.ModelForm):
         fields = ['title', 'description']
 
 class LessonForm(forms.ModelForm):
+    file = forms.FileField(required=False)
+
     class Meta:
         model = Lesson
         fields = ['course', 'title', 'content']

@@ -37,6 +37,7 @@ class Lesson(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     content = models.TextField()
+    file_id = models.CharField(max_length=255, blank=True, null=True)  # Appwrite File ID
 
     def __str__(self):
         return f"{self.title} ({self.course.title})"
