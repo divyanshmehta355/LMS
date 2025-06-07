@@ -8,4 +8,16 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('student/dashboard/', views.student_dashboard, name='student_dashboard'),
     path('instructor/dashboard/', views.instructor_dashboard, name='instructor_dashboard'),
+
+    # Instructor Dashboard URLs
+    path('instructor/dashboard/', views.instructor_dashboard, name='instructor_dashboard'),
+    path('instructor/course/create/', views.create_course, name='create_course'),
+    path('instructor/course/<int:course_id>/edit/', views.update_course, name='update_course'),
+    path('instructor/course/<int:course_id>/delete/', views.delete_course, name='delete_course'),
+
+    path('instructor/course/<int:course_id>/lessons/', views.manage_lessons, name='manage_lessons'),
+    path('instructor/course/<int:course_id>/lesson/create/', views.create_lesson, name='create_lesson'),
+    path('instructor/lesson/<int:lesson_id>/edit/', views.update_lesson, name='update_lesson'),
+    path('instructor/lesson/<int:lesson_id>/delete/', views.delete_lesson, name='delete_lesson'),
+
 ]

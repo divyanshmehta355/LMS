@@ -22,3 +22,17 @@ class RegisterForm(UserCreationForm):
             user.save()
             Profile.objects.filter(user=user).update(role=self.cleaned_data['role'])
         return user
+
+# Instructor Dashboard
+from django import forms
+from .models import Course, Lesson
+
+class CourseForm(forms.ModelForm):
+    class Meta:
+        model = Course
+        fields = ['title', 'description']
+
+class LessonForm(forms.ModelForm):
+    class Meta:
+        model = Lesson
+        fields = ['course', 'title', 'content']
