@@ -8,9 +8,6 @@
     {% csrf_token %}
     {{ form.as_p }}
 
-    <label class="block mt-4">Upload File (Optional):</label>
-    <input type="file" name="file" class="mt-1">
-
     {% if form.instance.file_id %}
         <p class="mt-2 text-sm">
             Existing file:

@@ -7,7 +7,8 @@
     <li class="bg-white p-4 rounded shadow">
         <h2 class="text-lg font-semibold">{{ lesson.title }}</h2>
         {% if lesson.file_id %}
-        <a href="https://cloud.appwrite.io/v1/storage/buckets/684345b50008bfe7742b/files/{{ lesson.file_id }}/view?project=6843452b00353fbabc66" target="_blank" class="text-blue-600 underline">Download File</a>
+        <iframe src="https://cloud.appwrite.io/v1/storage/buckets/684345b50008bfe7742b/files/{{ lesson.file_id }}/view?project=6843452b00353fbabc66" frameborder="0"></iframe>
+        <!-- <a href="https://cloud.appwrite.io/v1/storage/buckets/684345b50008bfe7742b/files/{{ lesson.file_id }}/view?project=6843452b00353fbabc66" target="_blank" class="text-blue-600 underline">Download File</a> -->
         {% endif %}
         <p class="text-gray-600">{{ lesson.content|truncatewords:20 }}</p>
         <div class="mt-2 space-x-3">
