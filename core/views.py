@@ -39,6 +39,8 @@ from django.contrib import messages
 from .forms import RegisterForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
+from .models import Enrollment
+
 
 def register_view(request):
     if request.method == 'POST':
@@ -74,7 +76,8 @@ def logout_view(request):
 # Dashboard Views
 @login_required
 def student_dashboard(request):
-    return render(request, 'core/student_dashboard.html')
+    enrollments = Enrollment.objects.filter(student=request.user).select_related('course')
+    return render(request, 'core/student/dashboard.html', {'enrollments': enrollments})
 
 @login_required
 def instructor_dashboard(request):
@@ -94,29 +97,79 @@ def instructor_dashboard(request):
     courses = Course.objects.filter(instructor=request.user)
     return render(request, 'core/instructor/dashboard.html', {'courses': courses})
 
+# views.py
+from appwrite.input_file import InputFile
+from .appwrite_client import storage  # Assuming already available
+
 @login_required
 def create_course(request):
     if request.user.profile.role != 'instructor':
         return redirect('home')
+
     if request.method == 'POST':
-        form = CourseForm(request.POST)
+        form = CourseForm(request.POST, request.FILES)
         if form.is_valid():
             course = form.save(commit=False)
             course.instructor = request.user
+
+            # Upload thumbnail to Appwrite
+            if request.FILES.get('thumbnail_file'):
+                file = request.FILES['thumbnail_file']
+                file_bytes = file.read()
+
+                try:
+                    uploaded_file = storage.create_file(
+                        bucket_id="684345b50008bfe7742b",
+                        file_id="unique()",
+                        file=InputFile.from_bytes(file_bytes, file.name),
+                        permissions=["read(\"any\")"]
+                    )
+                    course.thumbnail_file_id = uploaded_file['$id']
+                except Exception as e:
+                    print("Thumbnail upload failed:", e)
+
             course.save()
             return redirect('instructor_dashboard')
     else:
         form = CourseForm()
+
     return render(request, 'core/instructor/course_form.html', {'form': form})
+
+
+from appwrite.input_file import InputFile
+from .appwrite_client import storage  # Assuming your Appwrite client is set up
 
 @login_required
 def update_course(request, course_id):
     course = get_object_or_404(Course, id=course_id, instructor=request.user)
-    form = CourseForm(request.POST or None, instance=course)
-    if form.is_valid():
-        form.save()
-        return redirect('instructor_dashboard')
-    return render(request, 'core/instructor/course_form.html', {'form': form})
+    if request.method == 'POST':
+        form = CourseForm(request.POST, request.FILES, instance=course)
+        if form.is_valid():
+            course = form.save(commit=False)
+
+            # Check if a new thumbnail file is uploaded
+            if request.FILES.get('thumbnail_file'):
+                file = request.FILES['thumbnail_file']
+                file_bytes = file.read()
+
+                try:
+                    uploaded_file = storage.create_file(
+                        bucket_id="684345b50008bfe7742b",
+                        file_id="unique()",
+                        file=InputFile.from_bytes(file_bytes, file.name),
+                        permissions=["read(\"any\")"]
+                    )
+                    course.thumbnail_file_id = uploaded_file['$id']
+                except Exception as e:
+                    print("Error uploading new thumbnail:", e)
+
+            course.save()
+            return redirect('instructor_dashboard')
+    else:
+        form = CourseForm(instance=course)
+
+    return render(request, 'core/instructor/course_form.html', {'form': form, 'course': course})
+
 
 @login_required
 def delete_course(request, course_id):
@@ -131,12 +184,9 @@ def manage_lessons(request, course_id):
     return render(request, 'core/instructor/lesson_list.html', {'course': course, 'lessons': lessons})
 
 # File Upload Functionality Added
-import os
-import tempfile
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django import forms
-from .models import Course, Lesson
+from .models import Course
 from .forms import LessonForm
 from .appwrite_client import storage
 from appwrite.input_file import InputFile
@@ -153,46 +203,64 @@ def create_lesson(request, course_id):
 
             if request.FILES.get('file'):
                 upload_file = request.FILES['file']
+                file_bytes = upload_file.read()
 
-                # Save to a temporary file
-                with tempfile.NamedTemporaryFile(delete=False) as temp:
-                    for chunk in upload_file.chunks():
-                        temp.write(chunk)
-                    temp_path = temp.name
-
-                try:
-                    # Upload to Appwrite using path
-                    appwrite_file = storage.create_file(
-                        bucket_id="684345b50008bfe7742b",
-                        file_id="unique()",
-                        file=InputFile.from_path(temp_path),
-                    )
-                    lesson.file_id = appwrite_file['$id']
-                finally:
-                    os.remove(temp_path)  # Clean up temp file
+                appwrite_file = storage.create_file(
+                    bucket_id="684345b50008bfe7742b",
+                    file_id="unique()",
+                    file=InputFile.from_bytes(file_bytes, upload_file.name),
+                    permissions=["read(\"any\")"]
+                )
+                lesson.file_id = appwrite_file['$id']
 
             lesson.save()
             return redirect('manage_lessons', course_id=course.id)
-
     else:
         form = LessonForm(initial={'course': course})
         form.fields['course'].widget = forms.HiddenInput()
 
-    return render(request, 'core/instructor/lesson_form.html', {
-        'form': form,
-        'course': course
-    })
+    return render(request, 'core/instructor/lesson_form.html', {'form': form, 'course': course})
 
-
+from appwrite.input_file import InputFile
+from .appwrite_client import storage
+from django import forms
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Lesson
+from .forms import LessonForm
 
 @login_required
 def update_lesson(request, lesson_id):
     lesson = get_object_or_404(Lesson, id=lesson_id, course__instructor=request.user)
-    form = LessonForm(request.POST or None, instance=lesson)
-    if form.is_valid():
-        form.save()
-        return redirect('manage_lessons', course_id=lesson.course.id)
+
+    if request.method == 'POST':
+        form = LessonForm(request.POST, request.FILES, instance=lesson)
+        if form.is_valid():
+            lesson = form.save(commit=False)
+
+            if request.FILES.get('file'):
+                uploaded_file = request.FILES['file']
+                file_bytes = uploaded_file.read()
+
+                try:
+                    appwrite_file = storage.create_file(
+                        bucket_id="684345b50008bfe7742b",
+                        file_id="unique()",
+                        file=InputFile.from_bytes(file_bytes, uploaded_file.name),
+                        permissions=["read(\"any\")"]
+                    )
+                    lesson.file_id = appwrite_file['$id']
+                except Exception as e:
+                    print("Appwrite file upload failed:", e)
+
+            lesson.save()
+            return redirect('manage_lessons', course_id=lesson.course.id)
+    else:
+        form = LessonForm(instance=lesson)
+        form.fields['course'].widget = forms.HiddenInput()
+
     return render(request, 'core/instructor/lesson_form.html', {'form': form, 'course': lesson.course})
+
 
 @login_required
 def delete_lesson(request, lesson_id):
@@ -209,3 +277,82 @@ def enroll_in_course(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     Enrollment.objects.get_or_create(student=request.user, course=course)
     return redirect('student_dashboard')  # or course_detail
+
+# Student Dashboard
+from .models import Course, Lesson
+
+@login_required
+def course_detail(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    
+    # Ensure only enrolled students or instructor can view
+    if request.user != course.instructor and not Enrollment.objects.filter(course=course, student=request.user).exists():
+        return redirect('home')
+
+    lessons = Lesson.objects.filter(course=course)
+    return render(request, 'core/student/course_detail.html', {
+        'course': course,
+        'lessons': lessons
+    })
+
+@login_required
+def view_course_lessons(request, course_id, lesson_id=None):
+    course = get_object_or_404(Course, id=course_id)
+    lessons = Lesson.objects.filter(course=course).order_by('id')
+
+    if not lessons.exists():
+        return render(request, 'core/student/no_lessons.html', {'course': course})
+
+    if not lesson_id:
+        # Redirect to first lesson if none is specified
+        first_lesson = lessons.first()
+        return redirect('lesson_player', course_id=course.id, lesson_id=first_lesson.id)
+
+    lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+
+    return render(request, 'core/student/lesson_player.html', {
+        'course': course,
+        'lessons': lessons,
+        'current_lesson': lesson,
+    })
+
+# Track Progress
+# views.py
+from .models import LessonProgress
+
+@login_required
+def lesson_player(request, course_id, lesson_id):
+    course = get_object_or_404(Course, id=course_id)
+    lessons = course.lesson_set.all().order_by('id')
+    current_lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+
+    watched_lessons = LessonProgress.objects.filter(
+        user=request.user,
+        watched=True
+    ).values_list('lesson_id', flat=True)
+
+    return render(request, 'core/student/lesson_player.html', {
+        'course': course,
+        'lessons': lessons,
+        'current_lesson': current_lesson,
+        'watched_lessons': watched_lessons,
+    })
+
+
+
+# Toggle Manual Views
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Course, Lesson, LessonProgress
+
+@login_required
+def toggle_lesson_watch(request, course_id, lesson_id):
+    if request.method == 'POST':
+        lesson = get_object_or_404(Lesson, id=lesson_id, course_id=course_id)
+        progress, created = LessonProgress.objects.get_or_create(user=request.user, lesson=lesson)
+
+        progress.watched = not progress.watched
+        progress.save()
+
+        return redirect('lesson_player', course_id=course_id, lesson_id=lesson_id)
+    return redirect('lesson_player', course_id=course_id, lesson_id=lesson_id)

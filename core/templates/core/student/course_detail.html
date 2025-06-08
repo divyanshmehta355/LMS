@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">{{ course.title }}</h1>
+<p class="mb-4 text-gray-600">{{ course.description }}</p>
+
+{% if lessons %}
+    <ul class="space-y-3">
+        {% for lesson in lessons %}
+        <li class="p-4 bg-white rounded shadow">
+            <h2 class="text-lg font-semibold">{{ lesson.title }}</h2>
+            {% if lesson.file_id %}
+            <a href="https://cloud.appwrite.io/v1/storage/buckets/684345b50008bfe7742b/files/{{ lesson.file_id }}/view?project=6843452b00353fbabc66"
+               target="_blank" class="text-blue-600 hover:underline">📄 View Lesson File</a>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No lessons available for this course yet.</p>
+{% endif %}
+{% endblock %}

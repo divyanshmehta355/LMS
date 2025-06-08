@@ -4,20 +4,93 @@
     {% if form.instance.pk %}Edit{% else %}Create{% endif %} Lesson for "{{ course.title }}"
 </h1>
 
-<form method="post" enctype="multipart/form-data">
+<form id="lessonForm" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}
 
     {% if form.instance.file_id %}
         <p class="mt-2 text-sm">
             Existing file:
-            <a href="https://cloud.appwrite.io/v1/storage/buckets/YOUR_BUCKET_ID/files/{{ form.instance.file_id }}/view?project=YOUR_PROJECT_ID"
+            <a href="https://cloud.appwrite.io/v1/storage/buckets/684345b50008bfe7742b/files/{{ form.instance.file_id }}/view?project=6843452b00353fbabc66"
                target="_blank" class="text-blue-600 underline">
                 View File
             </a>
         </p>
     {% endif %}
 
-    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded mt-4">Save</button>
+    <button id="submitBtn" type="submit" class="bg-blue-500 text-white px-4 py-2 rounded mt-4">
+        Save
+    </button>
+
+    <!-- Progress bar -->
+    <div id="progressContainer" class="w-full bg-gray-200 rounded h-4 mt-4 hidden">
+        <div id="progressBar" class="h-4 bg-green-500 rounded" style="width: 0%"></div>
+    </div>
+    <p id="progressPercent" class="text-sm text-gray-700 mt-1 hidden">0%</p>
+
+    <!-- Feedback messages -->
+    <p id="successMessage" class="text-green-600 mt-4 hidden">✅ Lesson uploaded successfully!</p>
+    <p id="errorMessage" class="text-red-600 mt-4 hidden">❌ Something went wrong. Please try again.</p>
 </form>
+
+<script>
+document.getElementById('lessonForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const xhr = new XMLHttpRequest();
+
+    const submitBtn = document.getElementById('submitBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.getElementById('progressContainer');
+    const percentText = document.getElementById('progressPercent');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+
+    // Reset messages and button state
+    successMessage.classList.add('hidden');
+    errorMessage.classList.add('hidden');
+    progressBar.style.width = '0%';
+    percentText.classList.add('hidden');
+    progressContainer.classList.add('hidden');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Uploading...';
+
+    xhr.open('POST', '', true);
+
+    xhr.upload.addEventListener('progress', function (e) {
+        if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            progressContainer.classList.remove('hidden');
+            progressBar.style.width = percent + '%';
+            percentText.classList.remove('hidden');
+            percentText.textContent = percent + '%';
+        }
+    });
+
+    xhr.onload = function () {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save';
+
+        if (xhr.status === 200 || xhr.status === 302) {
+            successMessage.classList.remove('hidden');
+            form.reset();
+            progressBar.style.width = '0%';
+            percentText.classList.add('hidden');
+        } else {
+            errorMessage.classList.remove('hidden');
+        }
+    };
+
+    xhr.onerror = function () {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save';
+        errorMessage.classList.remove('hidden');
+    };
+
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.send(formData);
+});
+</script>
 {% endblock %}

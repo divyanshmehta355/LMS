@@ -4,34 +4,43 @@
     <meta charset="UTF-8">
     <title>{% block title %}LMS{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Tailwind CDN (you can use compiled version for production) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-50 text-gray-800 font-sans">
 
     <!-- Navbar -->
-    <nav class="bg-white shadow-md px-6 py-4 flex justify-between items-center">
-        <a href="{% url 'home' %}" class="text-xl font-bold text-blue-600">LMS</a>
-        <div class="space-x-4">
-            {% if user.is_authenticated %}
-                {% if user.profile.role == "instructor" %}
-                    <a href="{% url 'instructor_dashboard' %}" class="text-gray-700 hover:text-blue-600">Instructor Dashboard</a>
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="{% url 'home' %}" class="text-2xl font-bold text-blue-600">LMS</a>
+            <div class="space-x-4 text-sm sm:text-base">
+                {% if user.is_authenticated %}
+                    {% if user.profile.role == "instructor" %}
+                        <a href="{% url 'instructor_dashboard' %}" class="text-gray-700 hover:text-blue-600 transition">Instructor Dashboard</a>
+                    {% else %}
+                        <a href="{% url 'student_dashboard' %}" class="text-gray-700 hover:text-blue-600 transition">Student Dashboard</a>
+                    {% endif %}
+                    <a href="{% url 'logout' %}" class="text-red-500 hover:text-red-700 transition">Logout</a>
                 {% else %}
-                    <a href="{% url 'student_dashboard' %}" class="text-gray-700 hover:text-blue-600">Student Dashboard</a>
+                    <a href="{% url 'login' %}" class="text-gray-700 hover:text-blue-600 transition">Login</a>
+                    <a href="{% url 'register' %}" class="text-gray-700 hover:text-blue-600 transition">Register</a>
                 {% endif %}
-                <a href="{% url 'logout' %}" class="text-red-500 hover:text-red-700">Logout</a>
-            {% else %}
-                <a href="{% url 'login' %}" class="text-gray-700 hover:text-blue-600">Login</a>
-                <a href="{% url 'register' %}" class="text-gray-700 hover:text-blue-600">Register</a>
-            {% endif %}
+            </div>
         </div>
     </nav>
 
     <!-- Flash Messages -->
     {% if messages %}
-        <div class="max-w-2xl mx-auto mt-4">
+        <div class="container mx-auto px-4 mt-4">
             {% for message in messages %}
-                <div class="p-4 rounded bg-blue-100 text-blue-700 mb-2">
+                <div class="p-4 rounded-lg shadow-sm mb-3
+                            {% if message.tags == 'error' %}
+                                bg-red-100 text-red-700
+                            {% elif message.tags == 'success' %}
+                                bg-green-100 text-green-700
+                            {% else %}
+                                bg-blue-100 text-blue-700
+                            {% endif %}">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -39,7 +48,7 @@
     {% endif %}
 
     <!-- Main Content -->
-    <main class="max-w-4xl mx-auto mt-8 px-4">
+    <main class="container mx-auto px-4 py-8">
         {% block content %}{% endblock %}
     </main>
 

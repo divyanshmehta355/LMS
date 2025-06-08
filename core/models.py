@@ -28,10 +28,17 @@ from django.contrib.auth.models import User
 class Course(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
+    thumbnail_file_id = models.CharField(max_length=255, blank=True, null=True)
     instructor = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    def get_thumbnail_url(self):
+        if self.thumbnail_file_id:
+            return f"https://cloud.appwrite.io/v1/storage/buckets/684345b50008bfe7742b/files/{self.thumbnail_file_id}/view?project=6843452b00353fbabc66&width=400"
+        return None
+    
     def __str__(self):
         return self.title
+    
 
 class Lesson(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
@@ -50,3 +57,19 @@ class Enrollment(models.Model):
 
     class Meta:
         unique_together = ('student', 'course')
+
+# Track Lesson Progress
+from django.db import models
+from django.contrib.auth.models import User
+
+class LessonProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    watched = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'lesson')
+
+    def __str__(self):
+        return f"{self.student.username} watched {self.lesson.title}"
+    

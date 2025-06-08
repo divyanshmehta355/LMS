@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex flex-col md:flex-row h-[calc(100vh-4rem)] overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-full md:w-1/4 bg-gray-100 border-r p-4 overflow-y-auto">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">{{ course.title }}</h2>
+        <ul class="space-y-2">
+            {% for lesson in lessons %}
+            <li>
+                <a href="{% url 'lesson_player' course.id lesson.id %}" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200
+                              {% if lesson.id == current_lesson.id %}
+                                  bg-blue-500 text-white
+                              {% else %}
+                                  bg-white hover:bg-blue-100 text-gray-700
+                              {% endif %}">
+                    {% if lesson.id in watched_lessons %}
+                    <span class="text-green-500">✔️</span>
+                    {% else %}
+                    <span class="text-gray-400">⭕</span>
+                    {% endif %}
+                    <span class="truncate">{{ lesson.title }}</span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 bg-white p-6 overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl font-semibold text-gray-800">{{ current_lesson.title }}</h1>
+
+            <form method="post" action="{% url 'toggle_lesson_watch' course.id current_lesson.id %}">
+                {% csrf_token %}
+                {% if current_lesson.id in watched_lessons %}
+                <button class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">
+                    Mark as Unwatched
+                </button>
+                {% else %}
+                <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    Mark as Watched
+                </button>
+                {% endif %}
+            </form>
+        </div>
+
+        {% if current_lesson.file_id %}
+        <div class="w-full aspect-video rounded-lg overflow-hidden border shadow-sm">
+            <video
+                src="https://cloud.appwrite.io/v1/storage/buckets/684345b50008bfe7742b/files/{{ current_lesson.file_id }}/view?project=6843452b00353fbabc66"
+                class="w-full h-full" controls allowfullscreen>
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        {% else %}
+        <div class="p-6 bg-gray-100 rounded-lg text-gray-600">
+            <p>No video is available for this lesson.</p>
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

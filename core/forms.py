@@ -28,9 +28,14 @@ from django import forms
 from .models import Course, Lesson
 
 class CourseForm(forms.ModelForm):
+    thumbnail_file = forms.FileField(required=False)
+
     class Meta:
         model = Course
-        fields = ['title', 'description']
+        fields = ['title', 'description', 'thumbnail_file']  # Must include thumbnail_file
+        widgets = {
+            'thumbnail_file': forms.ClearableFileInput()
+        }
 
 class LessonForm(forms.ModelForm):
     file = forms.FileField(required=False)

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">🎓 My Enrolled Courses</h1>
+
+{% if enrollments %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for enrollment in enrollments %}
+    <div class="bg-white shadow p-4 rounded-lg">
+        <h2 class="text-lg font-semibold mb-2">{{ enrollment.course.title }}</h2>
+        <p class="text-gray-600">{{ enrollment.course.description|truncatewords:25 }}</p>
+        <a href="{% url 'lesson_player' enrollment.course.id %}"
+            class="inline-block mt-2 text-blue-600 hover:underline">
+            View Lessons →
+        </a>
+
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>You are not enrolled in any courses yet.</p>
+{% endif %}
+{% endblock %}

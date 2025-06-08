@@ -7,7 +7,15 @@
     <li class="bg-white p-4 rounded shadow">
         <h2 class="text-lg font-semibold">{{ lesson.title }}</h2>
         {% if lesson.file_id %}
-        <iframe src="https://cloud.appwrite.io/v1/storage/buckets/684345b50008bfe7742b/files/{{ lesson.file_id }}/view?project=6843452b00353fbabc66" frameborder="0"></iframe>
+        {% if lesson.file_id %}
+        <video controls  controlsList="nodownload" width="640" height="360" class="my-4 rounded shadow">
+            <source
+                src="https://cloud.appwrite.io/v1/storage/buckets/684345b50008bfe7742b/files/{{ lesson.file_id }}/view?project=6843452b00353fbabc66"
+                type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        {% endif %}
+
         <!-- <a href="https://cloud.appwrite.io/v1/storage/buckets/684345b50008bfe7742b/files/{{ lesson.file_id }}/view?project=6843452b00353fbabc66" target="_blank" class="text-blue-600 underline">Download File</a> -->
         {% endif %}
         <p class="text-gray-600">{{ lesson.content|truncatewords:20 }}</p>
