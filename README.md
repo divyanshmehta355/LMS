@@ -54,8 +54,8 @@ A clean and minimal **Learning Management System** built with **Django**, **Tail
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/lms-django.git
-cd lms-django
+git clone https://github.com/divyanshmehta355/LMS.git
+cd LMS
 ````
 
 ### 2. Create & Activate Virtual Environment
