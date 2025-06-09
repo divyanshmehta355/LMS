@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 
-load_dotenv()
 """
 Django settings for lms project.
 
@@ -20,23 +19,24 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-xs@bi1923@xc_bn^g=41)#9un#b4&yuj6%(3r@(t8)fql0(=q#'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -74,6 +74,29 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'lms.wsgi.application'
+
+# Admin Pannel
+JAZZMIN_SETTINGS = {
+    "site_title": "LMS Admin",
+    "site_header": "LMS Admin",
+    "site_brand": "LMS",
+    "welcome_sign": "Welcome to the LMS Admin",
+    "copyright": "Your Company",
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "related_modal_active": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": ["core", "auth", "courses"],
+    "icons": {
+        "auth.User": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "core.Course": "fas fa-book",
+        "core.Lesson": "fas fa-video",
+        # Add more icons as needed
+    },
+}
+
 
 
 # Database
@@ -128,7 +151,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / "staticfiles"    # Where Django will collect static files
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -138,3 +161,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", 0))
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "False") == "True"
+CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False") == "True"
