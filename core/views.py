@@ -1,3 +1,6 @@
+# Contants
+from .appwrite_client import bucket_id
+
 from django.shortcuts import render
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -119,7 +122,7 @@ def create_course(request):
 
                 try:
                     uploaded_file = storage.create_file(
-                        bucket_id="684345b50008bfe7742b",
+                        bucket_id=bucket_id,
                         file_id="unique()",
                         file=InputFile.from_bytes(file_bytes, file.name),
                         permissions=["read(\"any\")"]
@@ -154,7 +157,7 @@ def update_course(request, course_id):
 
                 try:
                     uploaded_file = storage.create_file(
-                        bucket_id="684345b50008bfe7742b",
+                        bucket_id=bucket_id,
                         file_id="unique()",
                         file=InputFile.from_bytes(file_bytes, file.name),
                         permissions=["read(\"any\")"]
@@ -206,7 +209,7 @@ def create_lesson(request, course_id):
                 file_bytes = upload_file.read()
 
                 appwrite_file = storage.create_file(
-                    bucket_id="684345b50008bfe7742b",
+                    bucket_id=bucket_id,
                     file_id="unique()",
                     file=InputFile.from_bytes(file_bytes, upload_file.name),
                     permissions=["read(\"any\")"]
@@ -244,7 +247,7 @@ def update_lesson(request, lesson_id):
 
                 try:
                     appwrite_file = storage.create_file(
-                        bucket_id="684345b50008bfe7742b",
+                        bucket_id=bucket_id,
                         file_id="unique()",
                         file=InputFile.from_bytes(file_bytes, uploaded_file.name),
                         permissions=["read(\"any\")"]

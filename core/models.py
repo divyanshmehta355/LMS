@@ -1,3 +1,6 @@
+# Contants
+from .appwrite_client import project_id, bucket_id
+
 # Authentication Model
 from django.contrib.auth.models import User
 from django.db import models
@@ -33,7 +36,7 @@ class Course(models.Model):
 
     def get_thumbnail_url(self):
         if self.thumbnail_file_id:
-            return f"https://cloud.appwrite.io/v1/storage/buckets/684345b50008bfe7742b/files/{self.thumbnail_file_id}/view?project=6843452b00353fbabc66&width=400"
+            return f"https://cloud.appwrite.io/v1/storage/buckets/{bucket_id}/files/{self.thumbnail_file_id}/view?project={project_id}&width=400"
         return None
     
     def __str__(self):
