@@ -1,14 +1,3 @@
-Sure! Here's a **clean and concise `README.md`** tailored to include just the essentials:
-
-* ✅ Project Overview
-* ✅ Features
-* ✅ Tech Stack
-* ✅ Screenshots
-* ✅ `.env` variables
-* ✅ Local Setup Instructions
-
----
-
 ````markdown
 # 🎓 LMS - Learning Management System
 
@@ -39,7 +28,7 @@ A clean and minimal **Learning Management System** built with **Django**, **Tail
 |--------------------|------------------------|
 | Backend Framework  | Django 5.x             |
 | Frontend Styling   | TailwindCSS            |
-| Database           | PostgreSQL (or SQLite) |
+| Database           | PostgreSQL             |
 | File Storage       | Appwrite Cloud         |
 | Authentication     | Django Built-in Auth   |
 
@@ -65,8 +54,8 @@ A clean and minimal **Learning Management System** built with **Django**, **Tail
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/lms-django.git
-cd lms-django
+git clone https://github.com/divyanshmehta355/LMS.git
+cd LMS
 ````
 
 ### 2. Create & Activate Virtual Environment
@@ -127,7 +116,7 @@ Visit: [http://localhost:8000](http://localhost:8000)
 
 ---
 
-**Built with ❤️ by Crazy Coder**
+**Built with ❤️ by Dev**
 
 ```
 
