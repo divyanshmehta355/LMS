@@ -2,68 +2,65 @@
 {% load static %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-4 py-6">
+<div class="container py-5">
 
-    <!-- Search Bar -->
-    <form method="get" class="mb-6">
-        <input type="text" name="q" value="{{ query }}" placeholder="Search courses..."
-               class="w-full p-3 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-    </form>
+  <!-- Search Bar -->
+  <form method="get" class="mb-4">
+    <input type="text" name="q" value="{{ query }}" class="form-control form-control-lg" placeholder="Search courses...">
+  </form>
 
-    <!-- Course Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for course in page_obj %}
-            <div class="bg-white shadow rounded p-4 border border-gray-200">
-                
-                <!-- Thumbnail Preview -->
-                {% if course.get_thumbnail_url %}
-                    <img src="{{ course.get_thumbnail_url }}" alt="{{ course.title }}"
-                         class="w-full h-40 object-fit rounded mb-3">
-                {% else %}
-                    <div class="w-full h-40 bg-gray-200 flex items-center justify-center rounded mb-3 text-gray-500">
-                        No Thumbnail
-                    </div>
-                {% endif %}
-
-                <h2 class="text-xl font-semibold mb-2">{{ course.title }}</h2>
-                <p class="text-sm text-gray-700 mb-3">{{ course.description|truncatechars:100 }}</p>
-
-                {% if user.is_authenticated and not course.is_enrolled %}
-                    <form method="post" action="{% url 'enroll_in_course' course.id %}">
-                        {% csrf_token %}
-                        <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
-                            Enroll
-                        </button>
-                    </form>
-                {% elif user.is_authenticated and course.is_enrolled %}
-                    <span class="text-green-600 text-sm font-medium">✅ Enrolled</span>
-                {% endif %}
+  <!-- Course Grid -->
+  <div class="row g-4">
+    {% for course in page_obj %}
+      <div class="col-sm-6 col-lg-4">
+        <div class="card h-100 shadow-sm border border-light-subtle">
+          
+          {% if course.get_thumbnail_url %}
+            <img src="{{ course.get_thumbnail_url }}" class="card-img-top" alt="{{ course.title }}" style="height: 200px; object-fit: cover;">
+          {% else %}
+            <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+              <span class="text-muted">No Thumbnail</span>
             </div>
-        {% empty %}
-            <p class="col-span-3 text-gray-500">No courses found.</p>
-        {% endfor %}
-    </div>
+          {% endif %}
 
-    <!-- Pagination Controls -->
-    <div class="mt-6 flex justify-center items-center space-x-3">
-        {% if page_obj.has_previous %}
-            <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}"
-               class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-                Previous
-            </a>
-        {% endif %}
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">{{ course.title }}</h5>
+            <p class="card-text small text-muted">{{ course.description|truncatechars:100 }}</p>
 
-        <span class="text-sm text-gray-600">
-            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-        </span>
+            {% if user.is_authenticated %}
+              {% if not course.is_enrolled %}
+                <form method="post" action="{% url 'enroll_in_course' course.id %}" class="mt-auto">
+                  {% csrf_token %}
+                  <button class="btn btn-success w-100">Enroll</button>
+                </form>
+              {% else %}
+                <div class="text-success small fw-semibold mt-auto">✅ Enrolled</div>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-center text-muted">
+        <p>No courses found.</p>
+      </div>
+    {% endfor %}
+  </div>
 
-        {% if page_obj.has_next %}
-            <a href="?q={{ query }}&page={{ page_obj.next_page_number }}"
-               class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-                Next
-            </a>
-        {% endif %}
-    </div>
+  <!-- Pagination Controls -->
+  <div class="d-flex justify-content-center align-items-center gap-3 mt-5">
+    {% if page_obj.has_previous %}
+      <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}" class="btn btn-outline-secondary">Previous</a>
+    {% endif %}
+
+    <span class="text-muted small">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+      <a href="?q={{ query }}&page={{ page_obj.next_page_number }}" class="btn btn-outline-secondary">Next</a>
+    {% endif %}
+  </div>
 
 </div>
 {% endblock %}

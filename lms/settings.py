@@ -36,7 +36,6 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 # Application definition
 
 INSTALLED_APPS = [
-    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,6 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    'jazzmin',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [
@@ -82,7 +83,7 @@ JAZZMIN_SETTINGS = {
     "site_header": "LMS Admin",
     "site_brand": "LMS",
     "welcome_sign": "Welcome to the LMS Admin",
-    "copyright": "Your Company",
+    "copyright": "LMS",
     "show_sidebar": True,
     "navigation_expanded": True,
     "related_modal_active": True,

@@ -1,63 +1,67 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="flex flex-col md:flex-row h-[calc(100vh-4rem)] overflow-hidden">
+
+<div class="container-fluid">
+  <div class="row vh-100 overflow-hidden">
 
     <!-- Sidebar -->
-    <aside class="w-full md:w-1/4 bg-gray-100 border-r p-4 overflow-y-auto">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">{{ course.title }}</h2>
-        <ul class="space-y-2">
-            {% for lesson in lessons %}
-            <li>
-                <a href="{% url 'lesson_player' course.id lesson.id %}" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200
-                              {% if lesson.id == current_lesson.id %}
-                                  bg-blue-500 text-white
-                              {% else %}
-                                  bg-white hover:bg-blue-100 text-gray-700
-                              {% endif %}">
-                    {% if lesson.id in watched_lessons %}
-                    <span class="text-green-500">✔️</span>
-                    {% else %}
-                    <span class="text-gray-400">⭕</span>
-                    {% endif %}
-                    <span class="truncate">{{ lesson.title }}</span>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
+    <aside class="col-12 col-md-3 bg-light border-end p-4 overflow-auto">
+      <h2 class="h5 fw-bold text-dark mb-4">{{ course.title }}</h2>
+      <ul class="list-group list-group-flush">
+        {% for lesson in lessons %}
+        <li class="list-group-item p-0 border-0">
+          <a href="{% url 'lesson_player' course.id lesson.id %}" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none rounded
+            {% if lesson.id == current_lesson.id %}
+              bg-primary text-white
+            {% else %}
+              text-dark hover:bg-light
+            {% endif %}">
+            {% if lesson.id in watched_lessons %}
+              <span class="text-success">✔️</span>
+            {% else %}
+              <span class="text-muted">⭕</span>
+            {% endif %}
+            <span class="text-truncate">{{ lesson.title }}</span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 bg-white p-6 overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-2xl font-semibold text-gray-800">{{ current_lesson.title }}</h1>
+    <main class="col bg-white p-4 overflow-auto">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h4 fw-semibold text-dark">{{ current_lesson.title }}</h1>
+        <form method="post" action="{% url 'toggle_lesson_watch' course.id current_lesson.id %}">
+          {% csrf_token %}
+          {% if current_lesson.id in watched_lessons %}
+            <button class="btn btn-warning">
+              Mark as Unwatched
+            </button>
+          {% else %}
+            <button class="btn btn-success">
+              Mark as Watched
+            </button>
+          {% endif %}
+        </form>
+      </div>
 
-            <form method="post" action="{% url 'toggle_lesson_watch' course.id current_lesson.id %}">
-                {% csrf_token %}
-                {% if current_lesson.id in watched_lessons %}
-                <button class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">
-                    Mark as Unwatched
-                </button>
-                {% else %}
-                <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                    Mark as Watched
-                </button>
-                {% endif %}
-            </form>
+      {% if current_lesson.file_id %}
+        <div class="ratio ratio-16x9 border rounded shadow-sm">
+          <video
+            src="https://cloud.appwrite.io/v1/storage/buckets/6846853a000f2d4c8e21/files/{{ current_lesson.file_id }}/view?project=684684b8000f8c42a7ae"
+            class="w-100 h-100" controls allowfullscreen>
+            Your browser does not support the video tag.
+          </video>
         </div>
-
-        {% if current_lesson.file_id %}
-        <div class="w-full aspect-video rounded-lg overflow-hidden border shadow-sm">
-            <video
-                src="https://cloud.appwrite.io/v1/storage/buckets/6846853a000f2d4c8e21/files/{{ current_lesson.file_id }}/view?project=684684b8000f8c42a7ae"
-                class="w-full h-full" controls allowfullscreen>
-                Your browser does not support the video tag.
-            </video>
+      {% else %}
+        <div class="alert alert-secondary" role="alert">
+          No video is available for this lesson.
         </div>
-        {% else %}
-        <div class="p-6 bg-gray-100 rounded-lg text-gray-600">
-            <p>No video is available for this lesson.</p>
-        </div>
-        {% endif %}
+      {% endif %}
     </main>
+
+  </div>
 </div>
+
 {% endblock %}

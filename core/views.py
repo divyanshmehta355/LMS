@@ -320,7 +320,6 @@ def view_course_lessons(request, course_id, lesson_id=None):
     })
 
 # Track Progress
-# views.py
 from .models import LessonProgress
 
 @login_required
@@ -359,3 +358,19 @@ def toggle_lesson_watch(request, course_id, lesson_id):
 
         return redirect('lesson_player', course_id=course_id, lesson_id=lesson_id)
     return redirect('lesson_player', course_id=course_id, lesson_id=lesson_id)
+
+# Validation on Registration
+from django.http import JsonResponse
+from django.contrib.auth.models import User
+from django.views.decorators.cache import never_cache
+
+@never_cache
+def validate_username(request):
+    username = request.GET.get('username', '').strip()
+    exists = User.objects.filter(username=username).exists()
+    return JsonResponse({'exists': exists})
+
+@never_cache
+def validate_email(request):
+    email = request.GET.get('email', '')
+    return JsonResponse({'exists': User.objects.filter(email__iexact=email).exists()})

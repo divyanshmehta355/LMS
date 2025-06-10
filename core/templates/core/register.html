@@ -1,30 +1,113 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 {% block content %}
-<div class="flex justify-center items-center min-h-screen bg-gray-100">
-  <div class="w-full max-w-md bg-white rounded-xl shadow-md p-8">
-    <h2 class="text-3xl font-bold text-center text-blue-600 mb-6">Create an Account</h2>
-    <form method="post" class="space-y-5">
+<div class="container py-5">
+  <div class="card mx-auto p-4 shadow" style="max-width: 500px;">
+    <h2 class="text-center mb-4 text-primary">Register</h2>
+
+    <form method="post" id="registerForm" novalidate>
       {% csrf_token %}
-      {% for field in form %}
-        <div>
-          <label class="block text-gray-700 font-semibold mb-1">{{ field.label }}:</label>
-          {{ field }}
-          {% if field.help_text %}
-            <p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>
-          {% endif %}
-          {% for error in field.errors %}
-            <p class="text-sm text-red-500">{{ error }}</p>
-          {% endfor %}
+
+      <div class="mb-3">
+        <label for="id_username" class="form-label">Username</label>
+        {{ form.username|add_class:"form-control" }}
+        <div id="usernameFeedback" class="form-text text-danger"></div>
+      </div>
+
+      <div class="mb-3">
+        <label for="id_email" class="form-label">Email</label>
+        {{ form.email|add_class:"form-control" }}
+        <div id="emailFeedback" class="form-text text-danger"></div>
+      </div>
+
+      <div class="mb-3">
+        <label for="id_password1" class="form-label">Password</label>
+        <div class="input-group">
+          {{ form.password1|add_class:"form-control" }}
+          <button type="button" class="btn btn-outline-secondary toggle-password">🙉</button>
         </div>
-      {% endfor %}
-      <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition">
-        Register
-      </button>
+      </div>
+
+      <div class="mb-3">
+        <label for="id_password2" class="form-label">Confirm Password</label>
+        <div class="input-group">
+          {{ form.password2|add_class:"form-control" }}
+          <button type="button" class="btn btn-outline-secondary toggle-password">🙉</button>
+        </div>
+        <div id="passwordMatchFeedback" class="form-text text-danger"></div>
+      </div>
+
+      {{ form.role|add_class:"form-select mb-3" }}
+
+      <button type="submit" class="btn btn-primary w-100">Register</button>
     </form>
-    <p class="mt-4 text-sm text-center text-gray-600">
-      Already have an account?
-      <a href="{% url 'login' %}" class="text-blue-500 hover:underline">Login</a>
-    </p>
   </div>
 </div>
+
+<script>
+  function throttle(func, delay) {
+    let timeout;
+    return function () {
+      const context = this, args = arguments;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+  }
+
+  // Toggle password
+  document.querySelectorAll('.toggle-password').forEach(button => {
+    button.addEventListener('click', function () {
+      const input = this.previousElementSibling;
+      if (input.type === 'password') {
+        input.type = 'text';
+        this.textContent = '🙈';
+      } else {
+        input.type = 'password';
+        this.textContent = '🙉';
+      }
+    });
+  });
+
+  const usernameInput = document.getElementById('id_username');
+  const usernameFeedback = document.getElementById('usernameFeedback');
+
+  usernameInput.addEventListener('input', throttle(function () {
+    const value = this.value;
+    if (!value) {
+      usernameFeedback.textContent = '';
+      return;
+    }
+    fetch(`/ajax/check-username/?username=${encodeURIComponent(value)}`)
+      .then(response => response.json())
+      .then(data => {
+        usernameFeedback.textContent = data.exists ? '❌ Username already exists' : '✅ Username Available';
+      });
+  }, 600));
+
+  const emailInput = document.getElementById('id_email');
+  const emailFeedback = document.getElementById('emailFeedback');
+
+  emailInput.addEventListener('input', throttle(function () {
+    const value = this.value;
+    if (!value) {
+      emailFeedback.textContent = '';
+      return;
+    }
+    fetch(`/ajax/check-email/?email=${encodeURIComponent(value)}`)
+      .then(response => response.json())
+      .then(data => {
+        emailFeedback.textContent = data.exists ? '❌ Email already registered' : '';
+      });
+  }, 600));
+
+  const pw1 = document.getElementById('id_password1');
+  const pw2 = document.getElementById('id_password2');
+  const pwFeedback = document.getElementById('passwordMatchFeedback');
+
+  function checkPasswordMatch() {
+    pwFeedback.textContent = pw1.value && pw2.value && pw1.value !== pw2.value ? '❌ Passwords do not match' : '';
+  }
+  pw1.addEventListener('input', checkPasswordMatch);
+  pw2.addEventListener('input', checkPasswordMatch);
+</script>
 {% endblock %}

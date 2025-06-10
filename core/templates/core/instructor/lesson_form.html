@@ -1,96 +1,117 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">
-    {% if form.instance.pk %}Edit{% else %}Create{% endif %} Lesson for "{{ course.title }}"
-</h1>
 
-<form id="lessonForm" method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
+<div class="container mt-5">
+  <div class="card shadow">
+    <div class="card-body">
+      <h1 class="h4 mb-4 text-primary">
+        {% if form.instance.pk %}Edit{% else %}Create{% endif %} Lesson for "{{ course.title }}"
+      </h1>
 
-    {% if form.instance.file_id %}
-        <p class="mt-2 text-sm">
-            Existing file:
-            <a href="https://cloud.appwrite.io/v1/storage/buckets/6846853a000f2d4c8e21/files/{{ form.instance.file_id }}/view?project=684684b8000f8c42a7ae"
-               target="_blank" class="text-blue-600 underline">
-                View File
-            </a>
-        </p>
-    {% endif %}
+      <form id="lessonForm" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
 
-    <button id="submitBtn" type="submit" class="bg-blue-500 text-white px-4 py-2 rounded mt-4">
-        Save
-    </button>
+        {% for field in form %}
+        <div class="mb-3">
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}
+          <div class="form-text">{{ field.help_text }}</div>
+          {% endif %}
+          {% for error in field.errors %}
+          <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+        {% endfor %}
 
-    <!-- Progress bar -->
-    <div id="progressContainer" class="w-full bg-gray-200 rounded h-4 mt-4 hidden">
-        <div id="progressBar" class="h-4 bg-green-500 rounded" style="width: 0%"></div>
+        {% if form.instance.file_id %}
+        <div class="mb-3">
+          <label class="form-label fw-medium">Existing File:</label><br>
+          <a href="https://cloud.appwrite.io/v1/storage/buckets/6846853a000f2d4c8e21/files/{{ form.instance.file_id }}/view?project=684684b8000f8c42a7ae"
+             target="_blank" class="link-primary">
+            View File
+          </a>
+        </div>
+        {% endif %}
+
+        <button id="submitBtn" type="submit" class="btn btn-primary w-100">
+          Save
+        </button>
+
+        <!-- Progress bar -->
+        <div id="progressContainer" class="progress mt-4 d-none">
+          <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%">
+          </div>
+        </div>
+        <p id="progressPercent" class="text-muted small mt-1 d-none">0%</p>
+
+        <!-- Feedback messages -->
+        <div id="successMessage" class="alert alert-success mt-4 d-none">✅ Lesson uploaded successfully!</div>
+        <div id="errorMessage" class="alert alert-danger mt-4 d-none">❌ Something went wrong. Please try again.</div>
+      </form>
     </div>
-    <p id="progressPercent" class="text-sm text-gray-700 mt-1 hidden">0%</p>
-
-    <!-- Feedback messages -->
-    <p id="successMessage" class="text-green-600 mt-4 hidden">✅ Lesson uploaded successfully!</p>
-    <p id="errorMessage" class="text-red-600 mt-4 hidden">❌ Something went wrong. Please try again.</p>
-</form>
+  </div>
+</div>
 
 <script>
 document.getElementById('lessonForm').addEventListener('submit', function (e) {
-    e.preventDefault();
+  e.preventDefault();
 
-    const form = e.target;
-    const formData = new FormData(form);
-    const xhr = new XMLHttpRequest();
+  const form = e.target;
+  const formData = new FormData(form);
+  const xhr = new XMLHttpRequest();
 
-    const submitBtn = document.getElementById('submitBtn');
-    const progressBar = document.getElementById('progressBar');
-    const progressContainer = document.getElementById('progressContainer');
-    const percentText = document.getElementById('progressPercent');
-    const successMessage = document.getElementById('successMessage');
-    const errorMessage = document.getElementById('errorMessage');
+  const submitBtn = document.getElementById('submitBtn');
+  const progressBar = document.getElementById('progressBar');
+  const progressContainer = document.getElementById('progressContainer');
+  const percentText = document.getElementById('progressPercent');
+  const successMessage = document.getElementById('successMessage');
+  const errorMessage = document.getElementById('errorMessage');
 
-    // Reset messages and button state
-    successMessage.classList.add('hidden');
-    errorMessage.classList.add('hidden');
-    progressBar.style.width = '0%';
-    percentText.classList.add('hidden');
-    progressContainer.classList.add('hidden');
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Uploading...';
+  // Reset
+  successMessage.classList.add('d-none');
+  errorMessage.classList.add('d-none');
+  progressBar.style.width = '0%';
+  percentText.classList.add('d-none');
+  progressContainer.classList.add('d-none');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Uploading...';
 
-    xhr.open('POST', '', true);
+  xhr.open('POST', '', true);
 
-    xhr.upload.addEventListener('progress', function (e) {
-        if (e.lengthComputable) {
-            const percent = Math.round((e.loaded / e.total) * 100);
-            progressContainer.classList.remove('hidden');
-            progressBar.style.width = percent + '%';
-            percentText.classList.remove('hidden');
-            percentText.textContent = percent + '%';
-        }
-    });
+  xhr.upload.addEventListener('progress', function (e) {
+    if (e.lengthComputable) {
+      const percent = Math.round((e.loaded / e.total) * 100);
+      progressContainer.classList.remove('d-none');
+      percentText.classList.remove('d-none');
+      progressBar.style.width = percent + '%';
+      percentText.textContent = percent + '%';
+    }
+  });
 
-    xhr.onload = function () {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Save';
+  xhr.onload = function () {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save';
 
-        if (xhr.status === 200 || xhr.status === 302) {
-            successMessage.classList.remove('hidden');
-            form.reset();
-            progressBar.style.width = '0%';
-            percentText.classList.add('hidden');
-        } else {
-            errorMessage.classList.remove('hidden');
-        }
-    };
+    if (xhr.status === 200 || xhr.status === 302) {
+      successMessage.classList.remove('d-none');
+      form.reset();
+      progressBar.style.width = '0%';
+      percentText.classList.add('d-none');
+    } else {
+      errorMessage.classList.remove('d-none');
+    }
+  };
 
-    xhr.onerror = function () {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Save';
-        errorMessage.classList.remove('hidden');
-    };
+  xhr.onerror = function () {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save';
+    errorMessage.classList.remove('d-none');
+  };
 
-    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-    xhr.send(formData);
+  xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+  xhr.send(formData);
 });
 </script>
+
 {% endblock %}

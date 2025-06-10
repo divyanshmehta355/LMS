@@ -1,30 +1,59 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 {% block content %}
-<div class="flex justify-center items-center min-h-screen bg-gray-100">
-  <div class="w-full max-w-md bg-white rounded-xl shadow-md p-8">
-    <h2 class="text-3xl font-bold text-center text-blue-600 mb-6">Login to LMS</h2>
-    <form method="post" class="space-y-5">
+<div class="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+  <div class="card shadow-lg p-4" style="width: 100%; max-width: 420px;">
+    <h2 class="text-center text-primary mb-4">Login to LMS</h2>
+
+    <form method="post" novalidate>
       {% csrf_token %}
       {% for field in form %}
-        <div>
-          <label class="block text-gray-700 font-semibold mb-1">{{ field.label }}:</label>
-          {{ field }}
+        <div class="mb-3 position-relative">
+          <label class="form-label fw-semibold">{{ field.label }}:</label>
+
+          {% if field.name == "password" %}
+            <div class="input-group">
+              {{ field|add_class:"form-control password-input" }}
+              <button type="button" class="btn btn-outline-secondary toggle-password">🙉</button>
+            </div>
+          {% else %}
+            {{ field|add_class:"form-control" }}
+          {% endif %}
+
           {% if field.help_text %}
-            <p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>
+            <div class="form-text">{{ field.help_text }}</div>
           {% endif %}
           {% for error in field.errors %}
-            <p class="text-sm text-red-500">{{ error }}</p>
+            <div class="text-danger small">{{ error }}</div>
           {% endfor %}
         </div>
       {% endfor %}
-      <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition">
-        Login
-      </button>
+
+      <button type="submit" class="btn btn-primary w-100">Login</button>
     </form>
-    <p class="mt-4 text-sm text-center text-gray-600">
+
+    <p class="mt-4 text-center small text-muted">
       Don’t have an account?
-      <a href="{% url 'register' %}" class="text-blue-500 hover:underline">Register</a>
+      <a href="{% url 'register' %}" class="text-decoration-none">Register</a>
     </p>
   </div>
 </div>
+
+<!-- Password Toggle Script -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('.toggle-password').forEach(button => {
+      button.addEventListener('click', function () {
+        const input = this.previousElementSibling;
+        if (input.type === 'password') {
+          input.type = 'text';
+          this.textContent = '🙈';
+        } else {
+          input.type = 'password';
+          this.textContent = '🙉';
+        }
+      });
+    });
+  });
+</script>
 {% endblock %}

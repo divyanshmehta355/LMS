@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Auth
     path('', views.home, name='home'),
     path('register/', views.register_view, name='register'),
     path('login/', views.login_view, name='login'),
@@ -11,10 +12,13 @@ urlpatterns = [
 
     # Instructor Dashboard URLs
     path('instructor/dashboard/', views.instructor_dashboard, name='instructor_dashboard'),
+
+    # Courses
     path('instructor/course/create/', views.create_course, name='create_course'),
     path('instructor/course/<int:course_id>/edit/', views.update_course, name='update_course'),
     path('instructor/course/<int:course_id>/delete/', views.delete_course, name='delete_course'),
 
+    # Lessons
     path('instructor/course/<int:course_id>/lessons/', views.manage_lessons, name='manage_lessons'),
     path('instructor/course/<int:course_id>/lesson/create/', views.create_lesson, name='create_lesson'),
     path('instructor/lesson/<int:lesson_id>/edit/', views.update_lesson, name='update_lesson'),
@@ -28,6 +32,12 @@ urlpatterns = [
     path('course/<int:course_id>/', views.course_detail, name='course_detail'),
     path('course/<int:course_id>/learn/<int:lesson_id>/', views.view_course_lessons, name='lesson_player'),
 
+    # Toogle Checking
     path('course/<int:course_id>/lesson/<int:lesson_id>/toggle/', views.toggle_lesson_watch, name='toggle_lesson_watch'),
     path('courses/<int:course_id>/lessons/<int:lesson_id>/toggle-watch/', views.toggle_lesson_watch, name='toggle_lesson_watch'),
+
+    # Validation Checking
+    path('ajax/check-username/', views.validate_username, name='check_username'),
+    path('ajax/check-email/', views.validate_email, name='check_email'),
+
 ]
