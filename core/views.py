@@ -4,35 +4,34 @@ from .appwrite_client import bucket_id
 from django.shortcuts import render
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.template.loader import render_to_string
 from .models import Course, Enrollment
 
 def home(request):
     query = request.GET.get('q', '')
+    page_number = request.GET.get('page')
     courses = Course.objects.all()
 
     if query:
-        courses = courses.filter(
-            Q(title__icontains=query) |
-            Q(description__icontains=query)
-        )
+        courses = courses.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
-    # Add `is_enrolled` flag for each course (if user is logged in)
     if request.user.is_authenticated:
-        enrolled_course_ids = Enrollment.objects.filter(student=request.user).values_list('course_id', flat=True)
-        for course in courses:
-            course.is_enrolled = course.id in enrolled_course_ids
+        enrolled_ids = Enrollment.objects.filter(student=request.user).values_list('course_id', flat=True)
+        for c in courses: c.is_enrolled = c.id in enrolled_ids
     else:
-        for course in courses:
-            course.is_enrolled = False
+        for c in courses: c.is_enrolled = False
 
     paginator = Paginator(courses, 6)
-    page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'core/home.html', {
-        'page_obj': page_obj,
-        'query': query,
-    })
+    context = { 'page_obj': page_obj, 'query': query, 'user': request.user }
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        html = render_to_string('core/course_list.html', context, request=request)
+        return JsonResponse({ 'html': html })
+
+    return render(request, 'core/home.html', context)
 
 
 # Authentication Views

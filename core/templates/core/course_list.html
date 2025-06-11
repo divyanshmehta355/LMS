@@ -1,0 +1,42 @@
+<div class="row g-4">
+  {% for course in page_obj %}
+    <div class="col-sm-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        {% if course.get_thumbnail_url %}
+          <img src="{{ course.get_thumbnail_url }}" class="card-img-top" style="height:200px; object-fit:fill;">
+        {% endif %}
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">{{ course.title }}</h5>
+          <p class="card-text small text-muted">{{ course.description|truncatechars:100 }}</p>
+          {% if user.is_authenticated %}
+            {% if not course.is_enrolled %}
+              <form method="post" action="{% url 'enroll_in_course' course.id %}" class="mt-auto">
+                {% csrf_token %}<button class="btn btn-success w-100">Enroll</button>
+              </form>
+            {% else %}
+              <div class="text-success small fw-semibold mt-auto">✅ Enrolled</div>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12 text-center text-muted"><p>No courses found.</p></div>
+  {% endfor %}
+</div>
+
+<nav aria-label="Page navigation">
+  <ul class="pagination justify-content-center mt-4">
+    {% if page_obj.has_previous %}
+      <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Previous</a></li>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+      <li class="page-item{% if page_obj.number == num %} active{% endif %}">
+        <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+      </li>
+    {% endfor %}
+    {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a></li>
+    {% endif %}
+  </ul>
+</nav>
