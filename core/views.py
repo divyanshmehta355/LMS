@@ -186,12 +186,14 @@ def manage_lessons(request, course_id):
     return render(request, 'core/instructor/lesson_list.html', {'course': course, 'lessons': lessons})
 
 # File Upload Functionality Added
+import requests
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Course
 from .forms import LessonForm
-from .appwrite_client import storage
-from appwrite.input_file import InputFile
+from django import forms
+
+STREAMTAPE_UPLOAD_URL = "https://streamtape-uploader.onrender.com/api/files/upload"
 
 @login_required
 def create_lesson(request, course_id):
@@ -205,15 +207,17 @@ def create_lesson(request, course_id):
 
             if request.FILES.get('file'):
                 upload_file = request.FILES['file']
-                file_bytes = upload_file.read()
+                files = {'file': (upload_file.name, upload_file.read(), upload_file.content_type)}
 
-                appwrite_file = storage.create_file(
-                    bucket_id=bucket_id,
-                    file_id="unique()",
-                    file=InputFile.from_bytes(file_bytes, upload_file.name),
-                    permissions=["read(\"any\")"]
-                )
-                lesson.file_id = appwrite_file['$id']
+                try:
+                    response = requests.post(STREAMTAPE_UPLOAD_URL, files=files)
+                    response.raise_for_status()
+
+                    res_data = response.json()
+                    lesson.file_id = res_data.get("fileId")  # Save only the Streamtape fileId
+                except requests.exceptions.RequestException as e:
+                    form.add_error('file', 'Failed to upload file. Please try again.')
+                    return render(request, 'core/instructor/lesson_form.html', {'form': form, 'course': course})
 
             lesson.save()
             return redirect('manage_lessons', course_id=course.id)
@@ -223,13 +227,14 @@ def create_lesson(request, course_id):
 
     return render(request, 'core/instructor/lesson_form.html', {'form': form, 'course': course})
 
-from appwrite.input_file import InputFile
-from .appwrite_client import storage
+import requests
 from django import forms
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Lesson
 from .forms import LessonForm
+
+STREAMTAPE_UPLOAD_URL = "https://streamtape-uploader.onrender.com/api/files/upload"
 
 @login_required
 def update_lesson(request, lesson_id):
@@ -242,18 +247,20 @@ def update_lesson(request, lesson_id):
 
             if request.FILES.get('file'):
                 uploaded_file = request.FILES['file']
-                file_bytes = uploaded_file.read()
+                files = {'file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}
 
                 try:
-                    appwrite_file = storage.create_file(
-                        bucket_id=bucket_id,
-                        file_id="unique()",
-                        file=InputFile.from_bytes(file_bytes, uploaded_file.name),
-                        permissions=["read(\"any\")"]
-                    )
-                    lesson.file_id = appwrite_file['$id']
-                except Exception as e:
-                    print("Appwrite file upload failed:", e)
+                    response = requests.post(STREAMTAPE_UPLOAD_URL, files=files)
+                    response.raise_for_status()
+                    res_data = response.json()
+
+                    lesson.file_id = res_data.get("fileId")
+                except requests.exceptions.RequestException as e:
+                    form.add_error('file', 'Failed to upload file to Streamtape.')
+                    return render(request, 'core/instructor/lesson_form.html', {
+                        'form': form,
+                        'course': lesson.course
+                    })
 
             lesson.save()
             return redirect('manage_lessons', course_id=lesson.course.id)
@@ -262,7 +269,6 @@ def update_lesson(request, lesson_id):
         form.fields['course'].widget = forms.HiddenInput()
 
     return render(request, 'core/instructor/lesson_form.html', {'form': form, 'course': lesson.course})
-
 
 @login_required
 def delete_lesson(request, lesson_id):
@@ -319,44 +325,44 @@ def view_course_lessons(request, course_id, lesson_id=None):
     })
 
 # Track Progress
-from .models import LessonProgress
+from django.shortcuts import get_object_or_404, render
+from .models import Lesson, LessonProgress, Course
 
-@login_required
 def lesson_player(request, course_id, lesson_id):
     course = get_object_or_404(Course, id=course_id)
-    lessons = course.lesson_set.all().order_by('id')
-    current_lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+    lessons = course.lesson_set.all()
+    current_lesson = get_object_or_404(lessons, id=lesson_id)
 
-    watched_lessons = LessonProgress.objects.filter(
-        user=request.user,
-        watched=True
-    ).values_list('lesson_id', flat=True)
+    if request.user.is_authenticated:
+        watched_lessons = LessonProgress.objects.filter(user=request.user, watched=True).values_list('lesson_id', flat=True)
+    else:
+        watched_lessons = []
 
-    return render(request, 'core/student/lesson_player.html', {
-        'course': course,
-        'lessons': lessons,
-        'current_lesson': current_lesson,
-        'watched_lessons': watched_lessons,
-    })
+    return render(request, 'core/lesson_player.html', {
+    'course': course,
+    'lessons': lessons,
+    'current_lesson': current_lesson,
+    'watched_lessons': list(watched_lessons),
+})
+
 
 
 
 # Toggle Manual Views
-from django.shortcuts import redirect, get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-from .models import Course, Lesson, LessonProgress
+from .models import LessonProgress, Lesson
 
+@require_POST
 @login_required
 def toggle_lesson_watch(request, course_id, lesson_id):
-    if request.method == 'POST':
-        lesson = get_object_or_404(Lesson, id=lesson_id, course_id=course_id)
-        progress, created = LessonProgress.objects.get_or_create(user=request.user, lesson=lesson)
+    lesson = get_object_or_404(Lesson, id=lesson_id, course_id=course_id)
+    progress, created = LessonProgress.objects.get_or_create(user=request.user, lesson=lesson)
+    progress.watched = not progress.watched
+    progress.save()
+    return JsonResponse({'watched': progress.watched})
 
-        progress.watched = not progress.watched
-        progress.save()
-
-        return redirect('lesson_player', course_id=course_id, lesson_id=lesson_id)
-    return redirect('lesson_player', course_id=course_id, lesson_id=lesson_id)
 
 # Validation on Registration
 from django.http import JsonResponse

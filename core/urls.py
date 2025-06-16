@@ -33,7 +33,6 @@ urlpatterns = [
     path('course/<int:course_id>/learn/<int:lesson_id>/', views.view_course_lessons, name='lesson_player'),
 
     # Toogle Checking
-    path('course/<int:course_id>/lesson/<int:lesson_id>/toggle/', views.toggle_lesson_watch, name='toggle_lesson_watch'),
     path('courses/<int:course_id>/lessons/<int:lesson_id>/toggle-watch/', views.toggle_lesson_watch, name='toggle_lesson_watch'),
 
     # Validation Checking

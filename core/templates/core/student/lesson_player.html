@@ -7,7 +7,7 @@
     <!-- Sidebar -->
     <aside class="col-12 col-md-3 bg-light border-end p-4 overflow-auto">
       <h2 class="h5 fw-bold text-dark mb-4">{{ course.title }}</h2>
-      <ul class="list-group list-group-flush">
+      <ul class="list-group list-group-flush" id="lesson-list">
         {% for lesson in lessons %}
         <li class="list-group-item p-0 border-0">
           <a href="{% url 'lesson_player' course.id lesson.id %}" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none rounded
@@ -15,12 +15,14 @@
               bg-primary text-white
             {% else %}
               text-dark hover:bg-light
-            {% endif %}">
-            {% if lesson.id in watched_lessons %}
-              <span class="text-success">✔️</span>
-            {% else %}
-              <span class="text-muted">⭕</span>
-            {% endif %}
+            {% endif %}" data-lesson-id="{{ lesson.id }}">
+            <span class="lesson-status" data-lesson-id="{{ lesson.id }}">
+              {% if lesson.id in watched_lessons %}
+              ✔️
+              {% else %}
+              ⭕
+              {% endif %}
+            </span>
             <span class="text-truncate">{{ lesson.title }}</span>
           </a>
         </li>
@@ -32,36 +34,63 @@
     <main class="col bg-white p-4 overflow-auto">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h4 fw-semibold text-dark">{{ current_lesson.title }}</h1>
-        <form method="post" action="{% url 'toggle_lesson_watch' course.id current_lesson.id %}">
-          {% csrf_token %}
-          {% if current_lesson.id in watched_lessons %}
-            <button class="btn btn-warning">
-              Mark as Unwatched
-            </button>
-          {% else %}
-            <button class="btn btn-success">
-              Mark as Watched
-            </button>
-          {% endif %}
-        </form>
+        {% if current_lesson.id in watched_lessons %}
+        <button id="toggle-watch-btn" class="btn btn-warning" data-lesson-id="{{ current_lesson.id }}">
+          Mark as Unwatched
+        </button>
+        {% else %}
+        <button id="toggle-watch-btn" class="btn btn-success" data-lesson-id="{{ current_lesson.id }}">
+          Mark as Watched
+        </button>
+        {% endif %}
+
       </div>
 
       {% if current_lesson.file_id %}
-        <div class="ratio ratio-16x9 border rounded shadow-sm">
-          <video
-            src="https://cloud.appwrite.io/v1/storage/buckets/6846853a000f2d4c8e21/files/{{ current_lesson.file_id }}/view?project=684684b8000f8c42a7ae"
-            class="w-100 h-100" controls allowfullscreen>
-            Your browser does not support the video tag.
-          </video>
-        </div>
+      <div class="ratio ratio-16x9 border rounded shadow-sm">
+        <iframe src="https://streamtape.com/e/{{ current_lesson.file_id }}/" width="100%" height="200" frameborder="0"
+          allowfullscreen class="rounded w-100 h-100" allow="autoplay" scrolling="no">
+        </iframe>
+      </div>
       {% else %}
-        <div class="alert alert-secondary" role="alert">
-          No video is available for this lesson.
-        </div>
+      <div class="alert alert-secondary" role="alert">
+        No video is available for this lesson.
+      </div>
       {% endif %}
     </main>
 
   </div>
 </div>
+
+<script>
+  document.getElementById("toggle-watch-btn").addEventListener("click", function () {
+    const button = this;
+    const lessonId = button.dataset.lessonId;
+    const url = `/courses/{{ course.id }}/lessons/${lessonId}/toggle-watch/`;
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "application/json"
+      },
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.watched) {
+          button.classList.remove("btn-success");
+          button.classList.add("btn-warning");
+          button.textContent = "Mark as Unwatched";
+          document.querySelector(`.lesson-status[data-lesson-id="${lessonId}"]`).textContent = "✔️";
+        } else {
+          button.classList.remove("btn-warning");
+          button.classList.add("btn-success");
+          button.textContent = "Mark as Watched";
+          document.querySelector(`.lesson-status[data-lesson-id="${lessonId}"]`).textContent = "⭕";
+        }
+      })
+      .catch(error => console.error("Toggle watch error:", error));
+  });
+</script>
 
 {% endblock %}
